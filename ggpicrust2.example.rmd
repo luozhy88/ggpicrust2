@@ -49,6 +49,44 @@ daa_results_list <-
 
 
 
+
+# library(httr)
+# set_config(config(ssl_verifypeer = 0L))
+###################################################################
+ko_table<-ko2kegg_abundance(file = "pred_metagenome_unstrat.tsv")
+
+ko_pathway_daa=pathway_daa(abundance=ko_table,metadata=metadata,group="Enviroment")
+
+ko_pathway_anno=pathway_annotation(file = "pred_metagenome_unstrat.tsv",daa_results_df=ko_pathway_daa,pathway = "KO",ko_to_kegg = TRUE)
+
+pathway_errorbar2(
+                 abundance=ko_table,
+                 daa_results_df=ko_pathway_daa,
+                 Group=metadata$Enviroment,
+                 p_values_threshold=0.05,
+                 select="Top30",
+                 p_value_bar = TRUE,
+                 ko_to_kegg = TRUE,
+                 colors = NULL,
+                  x_lab = NULL)
+
+###################################################################
+
+# Perform PCA and create visualizations
+pca_plot <- ggpicrust2::pathway_pca(ko_table, metadata, "Enviroment")
+
+
+
+
+
+
+
+
+
+
+
+
+
 #If you want to analysis the EC. MetaCyc. KO without conversions. You should turn ko_to_kegg to FALSE.
 metadata <-
   read_delim(
