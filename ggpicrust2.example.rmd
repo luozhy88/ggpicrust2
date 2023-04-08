@@ -1,7 +1,6 @@
 
 
 ```{r}
-# 
 # if(!requireNamespace("BiocManager", quietly = TRUE))
 #     install.packages("BiocManager")
 # BiocManager::install("Maaslin2")
@@ -16,7 +15,7 @@ library(dplyr)
 library(patchwork)
 library(ggprism)
 library(phyloseq)
-source("my_functions.R")
+
 ```
 
 ## KO
@@ -60,9 +59,9 @@ dev.off()
 
 ```{r}
 #################################every step##################################
-ko_table<-ko2kegg_abundance(file = "pred_metagenome_unstrat.tsv")
+ko_table<-ko2kegg_abundance(file = "KO_pred_metagenome_unstrat.tsv")
 ko_pathway_daa=pathway_daa(abundance=ko_table,metadata=metadata,group=group)
-ko_pathway_anno=pathway_annotation(file = "pred_metagenome_unstrat.tsv",daa_results_df=ko_pathway_daa,pathway = "KO",ko_to_kegg = TRUE)
+ko_pathway_anno=pathway_annotation(file = "KO_pred_metagenome_unstrat.tsv",daa_results_df=ko_pathway_daa,pathway = "KO",ko_to_kegg = TRUE)
 # ko_pathway_daa$description<-ko_pathway_daa$feature
 pathway_errorbar3(
                  abundance=ko_table,
@@ -83,11 +82,11 @@ pca_plot <- ggpicrust2::pathway_pca(ko_table, metadata, "Enviroment")
 # library(httr)
 # set_config(config(ssl_verifypeer = 0L))
 ###################################################################
-ko_table<-ko2kegg_abundance(file = "pred_metagenome_unstrat.tsv")
+ko_table<-ko2kegg_abundance(file = "KO_pred_metagenome_unstrat.tsv")
 
 ko_pathway_daa=pathway_daa(abundance=ko_table,metadata=metadata,group="Enviroment")
 
-ko_pathway_anno=pathway_annotation(file = "pred_metagenome_unstrat.tsv",daa_results_df=ko_pathway_daa,pathway = "KO",ko_to_kegg = TRUE)
+ko_pathway_anno=pathway_annotation(file = "KO_pred_metagenome_unstrat.tsv",daa_results_df=ko_pathway_daa,pathway = "KO",ko_to_kegg = TRUE)
 
 pathway_errorbar3(
                  abundance=ko_table,
