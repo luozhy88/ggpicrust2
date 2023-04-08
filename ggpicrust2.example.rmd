@@ -10,18 +10,18 @@
 # BiocManager::install("ALDEx2")
 # BiocManager::install("phyloseq")
 # devtools::install_github("cafferychen777/ggpicrust2")
-
-```
-
-
-```{r}
 # options(error = browser) # 设置进入调试模式
 library(ggpicrust2)
 library(dplyr)
 library(patchwork)
 library(ggprism)
+library(phyloseq)
 source("my_functions.R")
+```
 
+## KO
+
+```{r}
 #If you want to analysis kegg pathway abundance instead of ko within the pathway. You should turn ko_to_kegg to TRUE.
 #The kegg pathway typically have the more explainable description.
 metadata <- readr::read_delim(
@@ -35,7 +35,7 @@ group <- "Enviroment"#Mouse_Sex Enviroment
 # library(httr)
 # set_config(config(ssl_verifypeer = 0L))
 ##########################################run one step##########################################
-library(phyloseq)
+
 daa_results_list <-
   ggpicrust3(
     file = "pred_metagenome_unstrat.tsv",
@@ -88,12 +88,12 @@ ko_pathway_daa=pathway_daa(abundance=ko_table,metadata=metadata,group="Enviromen
 
 ko_pathway_anno=pathway_annotation(file = "pred_metagenome_unstrat.tsv",daa_results_df=ko_pathway_daa,pathway = "KO",ko_to_kegg = TRUE)
 
-pathway_errorbar2(
+pathway_errorbar3(
                  abundance=ko_table,
                  daa_results_df=ko_pathway_daa,
                  Group=metadata$Enviroment,
                  p_values_threshold=0.05,
-                 select="Top30",
+                 select=NULL,
                  p_value_bar = TRUE,
                  ko_to_kegg = TRUE,
                  colors = NULL,
@@ -103,19 +103,12 @@ pathway_errorbar2(
 
 # Perform PCA and create visualizations
 pca_plot <- ggpicrust2::pathway_pca(ko_table, metadata, "Enviroment")
+```
 
+##EC
 
-
-
-
-
-
-
-
-
-
-
-
+```{r}
+source("my_functions.R")
 #If you want to analysis the EC. MetaCyc. KO without conversions. You should turn ko_to_kegg to FALSE.
 metadata <-
   read_delim(
@@ -126,7 +119,7 @@ metadata <-
   )
 group <- "Enviroment"
 daa_results_list <-
-  ggpicrust2(
+  ggpicrust3(
     file = "pred_metagenome_unstrat.tsv",
     metadata = metadata,
     group = "Enviroment",

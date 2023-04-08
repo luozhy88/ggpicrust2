@@ -205,6 +205,7 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
                       colors = NULL) 
 {
   plot_result_list <- list()
+  # browser()
   switch(ko_to_kegg, `TRUE` = {
     plot_result_list <- list()
     abundance <- ko2kegg_abundance(file)
@@ -252,14 +253,17 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
     }
     return(plot_result_list)
   }, `FALSE` = {
+    # browser()
     plot_result_list <- list()
-    abundance <- readr::read_delim(file, delim = "\t", escape_double = FALSE, 
-                                   trim_ws = TRUE)
-    abundance <- tibble::column_to_rownames(abundance, var = "function")
+    abundance <- readr::read_delim(file, delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+    abundance <- tibble::column_to_rownames(abundance, var = "#NAME")
     daa_results_df <- pathway_daa(abundance = abundance, 
                                   metadata = metadata, group = group, daa_method = daa_method, 
                                   select = select, p.adjust = p.adjust, reference = reference)
-    daa_results_df <- pathway_annotation(pathway = pathway, 
+    daa_results_df_count=dplyr::filter(daa_results_df,p_adjust <= 0.05)
+    print(paste0("length of daa_results_df(P<=0.05): ",nrow(daa_results_df_count),"\n") )
+    
+    daa_results_df2 <- pathway_annotation(pathway = pathway, 
                                          ko_to_kegg = FALSE, daa_results_df = daa_results_df)
     j <- 1
     for (i in unique(daa_results_df$method)) {
