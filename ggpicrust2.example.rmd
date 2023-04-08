@@ -78,8 +78,6 @@ pathway_errorbar3(
 # Perform PCA and create visualizations
 pca_plot <- ggpicrust2::pathway_pca(ko_table, metadata, "Enviroment")
 
-<<<<<<< HEAD
-=======
 
 # library(httr)
 # set_config(config(ssl_verifypeer = 0L))
@@ -142,7 +140,7 @@ daa_results_list <-
     reference = NULL
   )
 #The visualization will be published in viewer.
->>>>>>> 37810f0891ea3ec18df073cd3704346718ab4c5f
+
 ```
 
 
