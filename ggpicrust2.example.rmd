@@ -2,76 +2,85 @@
 
 ```{r}
 # 
-if(!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("Maaslin2")
-BiocManager::install("lefser")
-BiocManager::install("DESeq2")
-BiocManager::install("ALDEx2")
-BiocManager::install("phyloseq")
-devtools::install_github("cafferychen777/ggpicrust2")
+# if(!requireNamespace("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+# BiocManager::install("Maaslin2")
+# BiocManager::install("lefser")
+# BiocManager::install("DESeq2")
+# BiocManager::install("ALDEx2")
+# BiocManager::install("phyloseq")
+# devtools::install_github("cafferychen777/ggpicrust2")
 
 ```
 
 
 ```{r}
-options(error = browser) # 设置进入调试模式
+# options(error = browser) # 设置进入调试模式
 library(ggpicrust2)
+library(dplyr)
+library(patchwork)
+library(ggprism)
+source("my_functions.R")
+
 #If you want to analysis kegg pathway abundance instead of ko within the pathway. You should turn ko_to_kegg to TRUE.
 #The kegg pathway typically have the more explainable description.
-metadata <-
-  readr::read_delim(
+metadata <- readr::read_delim(
     "new_metadata.txt",
     delim = "\t",
     escape_double = FALSE,
     trim_ws = TRUE
   )
-group <- "Enviroment"
+group <- "Enviroment"#Mouse_Sex Enviroment
 
 # library(httr)
 # set_config(config(ssl_verifypeer = 0L))
-
+##########################################run one step##########################################
+library(phyloseq)
 daa_results_list <-
-  ggpicrust2(
+  ggpicrust3(
     file = "pred_metagenome_unstrat.tsv",
     metadata = metadata,
-    group = "Enviroment",
+    group = group,
     pathway = "KO",
     daa_method = "LinDA",
     order = "pathway_class",
     ko_to_kegg = TRUE,
     x_lab = "pathway_name",
     p.adjust = "BH",
+    p_value_bar = FALSE, #fold change
     select = NULL,
     reference = NULL
   )
-#The visualization will be published in viewer.
-
-
-
-#If you want to analysis the EC. MetaCyc. KO without conversions. You should turn ko_to_kegg to FALSE.
-metadata <-
-  read_delim(
-    "new_metadata.txt",
-    delim = "\t",
-    escape_double = FALSE,
-    trim_ws = TRUE
-  )
-group <- "Enviroment"
-daa_results_list <-
-  ggpicrust2(
-    file = "pred_metagenome_unstrat.tsv",
-    metadata = metadata,
-    group = "Enviroment",
-    pathway = "EC",
-    daa_method = "LinDA",
-    order = "group",
-    ko_to_kegg = FALSE,
-    x_lab = "description",
-    p.adjust = "BH",
-    select = NULL,
-    reference = NULL
-  )
-#The visualization will be published in viewer.
+pdf(paste0("daa_results_plot_",group,".pdf"),width = 12)
+show(daa_results_list)
+dev.off()
 ```
+
+
+```{r}
+#################################every step##################################
+ko_table<-ko2kegg_abundance(file = "pred_metagenome_unstrat.tsv")
+ko_pathway_daa=pathway_daa(abundance=ko_table,metadata=metadata,group=group)
+ko_pathway_anno=pathway_annotation(file = "pred_metagenome_unstrat.tsv",daa_results_df=ko_pathway_daa,pathway = "KO",ko_to_kegg = TRUE)
+# ko_pathway_daa$description<-ko_pathway_daa$feature
+pathway_errorbar3(
+                 abundance=ko_table,
+                 daa_results_df=ko_pathway_daa,
+                 Group=metadata[,group],
+                 p_values_threshold=0.03,
+                 select=NULL,
+                 ko_to_kegg=TRUE,
+                 x_lab=NULL,
+                 p_value_bar = TRUE)
+
+###################################################################
+
+# Perform PCA and create visualizations
+pca_plot <- ggpicrust2::pathway_pca(ko_table, metadata, "Enviroment")
+
+```
+
+
+
+
 
