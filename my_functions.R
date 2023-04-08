@@ -15,12 +15,13 @@ pathway_errorbar3<-function (abundance, daa_results_df, Group, ko_to_kegg = FALS
       x_lab <- "description"
     }
   }
+  #browser()
+  Group<-as.vector(Group) %>% unlist()
   if (is.null(colors)) {
     mycolors <- c("#d93c3e", "#3685bc", "#6faa3e", "#e8a825",  "#c973e6", "#ee6b3d", "#2db0a7", "#f25292")[1:nlevels(as.factor(Group))]
   }
   errorbar_abundance_mat <- as.matrix(abundance)
-  daa_results_filtered_df <- daa_results_df[daa_results_df$p_adjust < 
-                                              p_values_threshold, ]
+  daa_results_filtered_df <- daa_results_df[daa_results_df$p_adjust <  p_values_threshold, ]
   if (!is.null(select)) {
     daa_results_filtered_sub_df <- daa_results_filtered_df[daa_results_filtered_df$feature %in% 
                                                              select, ]
@@ -39,9 +40,10 @@ pathway_errorbar3<-function (abundance, daa_results_df, Group, ko_to_kegg = FALS
   error_bar_matrix <- cbind(sample = colnames(errorbar_sub_relative_abundance_mat), 
                             group = Group, t(errorbar_sub_relative_abundance_mat))
   error_bar_df <- as.data.frame(error_bar_matrix)
+  colnames(error_bar_df)[2]<-"group"
+  #browser()
   error_bar_pivot_longer_df <- tidyr::pivot_longer(error_bar_df,   -c(sample, group))
-  error_bar_pivot_longer_tibble <- mutate(error_bar_pivot_longer_df, 
-                                          group = as.factor(group))
+  error_bar_pivot_longer_tibble <- mutate(error_bar_pivot_longer_df, group = as.factor(group))
   error_bar_pivot_longer_tibble$sample <- factor(error_bar_pivot_longer_tibble$sample)
   error_bar_pivot_longer_tibble$name <- factor(error_bar_pivot_longer_tibble$name)
   error_bar_pivot_longer_tibble$value <- as.numeric(error_bar_pivot_longer_tibble$value)
@@ -171,7 +173,7 @@ pathway_errorbar3<-function (abundance, daa_results_df, Group, ko_to_kegg = FALS
                    axis.line = ggplot2::element_blank(), panel.grid.major.y = ggplot2::element_blank(), 
                    panel.grid.major.x = ggplot2::element_blank(), panel.background = ggplot2::element_blank(), 
                    axis.text = ggplot2::element_blank(), plot.margin = ggplot2::unit(c(0,  0.2, 0, 0), "cm"), axis.title.y = ggplot2::element_text(size = 11,   color = "black", vjust = 0), axis.title.x = ggplot2::element_blank(), legend.position = "non")
-  # browser()
+  #browser()
   if (p_value_bar == TRUE) {
     if (ko_to_kegg == TRUE) {
       combination_bar_plot <- pathway_class_annotation +
@@ -214,7 +216,7 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
     daa_results_df <- pathway_daa(abundance = abundance, 
                                   metadata = metadata, group = group, daa_method = daa_method, 
                                   select = select, p.adjust = p.adjust, reference = reference)
-    write.csv(daa_results_df,paste0("daa_results_df_",group,".csv"),row.names = FALSE  )
+    write.csv(daa_results_df,paste("daa_results_df",group,daa_method,".csv",sep = "_"),row.names = FALSE  )
     daa_results_df_count=dplyr::filter(daa_results_df,p_adjust <= 0.05)
     print(paste0("length of daa_results_df(P<=0.05): ",nrow(daa_results_df_count),"\n") )
     print("daa_results_df finished!\n")
@@ -227,21 +229,26 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
       print("pathway_annotation finished!\n")
     }
     j <- 1
-    for (i in unique(daa_results_df$method)) {
+    
+    for (i in unique(daa_results_df$method)  ) {
+      print(paste0("use method:",i,"\n"))
+      # if(i=="ALDEx2_Wilcoxon rank test"){browser()}
       daa_sub_method_results_df <- daa_results_df[daa_results_df[, "method"] == i, ]
       daa_sub_method_results_df_sorted <- data.frame()
+      
       if (is.null(select)) {
         daa_sub_method_results_df_sorted <- daa_sub_method_results_df
       } else if (select == "Top 10") {
         daa_sub_method_results_df_sorted <- daa_sub_method_results_df[order(daa_sub_method_results_df$p_adjust),  ]
-        daa_sub_method_results_df_sorted <- daa_sub_method_results_df_sorted[1:10,  ]
+        daa_sub_method_results_df_sorted <- daa_sub_method_results_df_sorted%>% head(10)
       } else if (select == "Top 20") {
         daa_sub_method_results_df_sorted <- daa_sub_method_results_df[order(daa_sub_method_results_df$p_adjust), ]
-        daa_sub_method_results_df_sorted <- daa_sub_method_results_df_sorted[1:20,  ]
+        daa_sub_method_results_df_sorted <- daa_sub_method_results_df_sorted%>% head(20)
       } else if (select == "Top 30") {
         daa_sub_method_results_df_sorted <- daa_sub_method_results_df[order(daa_sub_method_results_df$p_adjust),  ]
-        daa_sub_method_results_df_sorted <- daa_sub_method_results_df_sorted[1:30,  ]
+        daa_sub_method_results_df_sorted <- daa_sub_method_results_df_sorted %>% head(30)
       }
+      #browser()
       combination_bar_plot <- pathway_errorbar3(abundance = abundance, 
                                                 daa_results_df = daa_sub_method_results_df_sorted, 
                                                 Group = metadata[, group], ko_to_kegg = ko_to_kegg, 

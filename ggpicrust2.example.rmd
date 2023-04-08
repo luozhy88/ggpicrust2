@@ -22,6 +22,7 @@ source("my_functions.R")
 ## KO
 
 ```{r}
+source("my_functions.R")
 #If you want to analysis kegg pathway abundance instead of ko within the pathway. You should turn ko_to_kegg to TRUE.
 #The kegg pathway typically have the more explainable description.
 metadata <- readr::read_delim(
@@ -30,28 +31,28 @@ metadata <- readr::read_delim(
     escape_double = FALSE,
     trim_ws = TRUE
   )
-group <- "Enviroment"#Mouse_Sex Enviroment
-
+group = "Enviroment"#Mouse_Sex Enviroment
+reference="Pro-survival"
 # library(httr)
 # set_config(config(ssl_verifypeer = 0L))
 ##########################################run one step##########################################
-
-daa_results_list <-
-  ggpicrust3(
-    file = "pred_metagenome_unstrat.tsv",
-    metadata = metadata,
-    group = group,
-    pathway = "KO",
-    daa_method = "LinDA",
-    order = "pathway_class",
-    ko_to_kegg = TRUE,
-    x_lab = "pathway_name",
-    p.adjust = "BH",
-    p_value_bar = FALSE, #fold change
-    select = NULL,
-    reference = NULL
-  )
-pdf(paste0("daa_results_plot_",group,".pdf"),width = 12)
+daa_method = "edgeR" #LinDA  ALDEx2 "limma voom" edgeR DEseq2
+daa_results_list <-ggpicrust3(
+                    file = "KO_pred_metagenome_unstrat.tsv",
+                    metadata = metadata,
+                    group = group,
+                    pathway = "KO",
+                    daa_method = daa_method,
+                    order = "pathway_class",
+                    ko_to_kegg = TRUE,
+                    x_lab = "pathway_name",
+                    p.adjust = "BH",
+                    p_value_bar = TRUE, #fold change
+                    select = "Top 30" , #Top 30
+                    reference = reference 
+                  )
+pdf(paste("daa_results_plot",group,daa_method,".pdf",sep = "_"),width = 18)
+# show(daa_results_list[[1]])
 show(daa_results_list)
 dev.off()
 ```
