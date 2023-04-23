@@ -203,7 +203,7 @@ pathway_errorbar3<-function (abundance, daa_results_df, Group, ko_to_kegg = FALS
 
 ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2", 
                       ko_to_kegg = FALSE, p.adjust = "BH", order = "group", p_value_bar = TRUE, 
-                      x_lab = "pathway_name", select = NULL, reference = NULL, 
+                      x_lab = "pathway_name", select = NULL, reference = NULL, outname=outname,
                       colors = NULL) 
 {
   plot_result_list <- list()
@@ -212,11 +212,13 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
     plot_result_list <- list()
     abundance <- ko2kegg_abundance(file)
     print("ko2kegg_abundance finished!\n")
-    #browser()
+    # browser()
     daa_results_df <- pathway_daa(abundance = abundance, 
                                   metadata = metadata, group = group, daa_method = daa_method, 
                                   select = select, p.adjust = p.adjust, reference = reference)
-    write.csv(daa_results_df,paste("daa_results_df",group,daa_method,".csv",sep = "_"),row.names = FALSE  )
+    
+    write.csv(daa_results_df,paste(outname,"_daa_results_df",group,daa_method,".csv",sep = "_"),row.names = FALSE  )
+    
     daa_results_df_count=dplyr::filter(daa_results_df,p_adjust <= 0.05)
     print(paste0("length of daa_results_df(P<=0.05): ",nrow(daa_results_df_count),"\n") )
     print("daa_results_df finished!\n")
@@ -248,7 +250,9 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
         daa_sub_method_results_df_sorted <- daa_sub_method_results_df[order(daa_sub_method_results_df$p_adjust),  ]
         daa_sub_method_results_df_sorted <- daa_sub_method_results_df_sorted %>% head(30)
       }
-      #browser()
+      # browser()
+      write.csv(daa_sub_method_results_df_sorted,paste(outname,"_daa_results_df_sorted_padj_",group,daa_method,".csv",sep = "_"),row.names = FALSE  )
+      
       combination_bar_plot <- pathway_errorbar3(abundance = abundance, 
                                                 daa_results_df = daa_sub_method_results_df_sorted, 
                                                 Group = metadata[, group], ko_to_kegg = ko_to_kegg, 
@@ -263,7 +267,7 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
     # browser()
     plot_result_list <- list()
     abundance <- readr::read_delim(file, delim = "\t", escape_double = FALSE, trim_ws = TRUE)
-    abundance <- tibble::column_to_rownames(abundance, var = "#NAME")
+    abundance <- tibble::column_to_rownames(abundance, var = "NAME")
     daa_results_df <- pathway_daa(abundance = abundance, 
                                   metadata = metadata, group = group, daa_method = daa_method, 
                                   select = select, p.adjust = p.adjust, reference = reference)
@@ -288,4 +292,43 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
   })
 }
 
-
+ko2kegg_abundance<-function(file){
+  
+  file_format <- substr(file, nchar(file) - 3, nchar(file))
+  switch(file_format, .txt = abundance <- readr::read_delim(file, 
+                                                            delim = "\t", escape_double = FALSE, trim_ws = TRUE), 
+         .tsv = abundance <- readr::read_delim(file, delim = "\t", 
+                                               escape_double = FALSE, trim_ws = TRUE), .csv = abundance <- readr::read_delim(file, 
+                                                                                                                             delim = "\t", escape_double = FALSE, trim_ws = TRUE), 
+         stop("Error: Please input file as .tsv, .txt or .csv\nThe best input file is what you get from picrust2 output file 'pred_metagenome_unstrat.tsv'"))
+  message("Calculation may take a long time, please be patient.")
+  load(system.file("extdata", "kegg_reference.RData", package = "ggpicrust2"))
+  sample_names <- colnames(abundance)[-1]
+  kegg_names <- ko_to_kegg_reference[, 1]
+  print(ko_to_kegg_reference)
+  kegg_abundance <- matrix(NA, nrow = nrow(kegg_names), ncol = length(sample_names))
+  colnames(kegg_abundance) <- sample_names
+  rownames(kegg_abundance) <- as.matrix(kegg_names)
+  for (i in seq_len(nrow(kegg_abundance))) {
+    for (j in seq_len(ncol(kegg_abundance))) {
+      print(i)
+      print(j)
+      kegg_name <- rownames(kegg_abundance)[i]
+      sample_name <- colnames(kegg_abundance)[j]
+      ko_to_kegg <- ko_to_kegg_reference[ko_to_kegg_reference[,  1] == kegg_name, -1]
+      ko_to_kegg <- ko_to_kegg[!is.na(ko_to_kegg)]
+      count_one_clumn<-abundance[ as.matrix(abundance[,  1]) %in% ko_to_kegg, sample_name]
+      kegg_abundance[i, j] <- sum(count_one_clumn[,1], na.rm = TRUE)
+      print(j)
+    }
+  }
+  print(kegg_abundance)
+  # browser()
+  kegg_abundance <- kegg_abundance[rowSums(kegg_abundance) !=  0, ]
+  message("The kegg pathway with zero abundance in all the different samples has been removed.")
+  kegg_abundance <- as.data.frame(kegg_abundance)
+  return(kegg_abundance)
+  
+  
+  
+}
