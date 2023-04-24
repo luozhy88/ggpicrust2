@@ -41,7 +41,7 @@ pathway_errorbar3<-function (abundance, daa_results_df, Group, ko_to_kegg = FALS
                             group = Group, t(errorbar_sub_relative_abundance_mat))
   error_bar_df <- as.data.frame(error_bar_matrix)
   colnames(error_bar_df)[2]<-"group"
-  #browser()
+  # browser()
   error_bar_pivot_longer_df <- tidyr::pivot_longer(error_bar_df,   -c(sample, group))
   error_bar_pivot_longer_tibble <- mutate(error_bar_pivot_longer_df, group = as.factor(group))
   error_bar_pivot_longer_tibble$sample <- factor(error_bar_pivot_longer_tibble$sample)
@@ -79,11 +79,11 @@ pathway_errorbar3<-function (abundance, daa_results_df, Group, ko_to_kegg = FALS
   })
   
   daa_results_filtered_sub_df <- daa_results_filtered_sub_df[order, ]
-  error_bar_pivot_longer_tibble_summarised_ordered <- data.frame(name = NULL, 
-                                                                 group = NULL, mean = NULL, sd = NULL)
+  error_bar_pivot_longer_tibble_summarised_ordered <- data.frame(name = NULL,   group = NULL, mean = NULL, sd = NULL)
   for (i in daa_results_filtered_sub_df$feature) {
     error_bar_pivot_longer_tibble_summarised_ordered <- rbind(error_bar_pivot_longer_tibble_summarised_ordered, error_bar_pivot_longer_tibble_summarised[error_bar_pivot_longer_tibble_summarised$name ==  i, ])
   }
+  # browser()
   if (ko_to_kegg == FALSE) {
     error_bar_pivot_longer_tibble_summarised_ordered[, x_lab] <- rep(daa_results_filtered_sub_df[,  x_lab], each = length(levels(factor(error_bar_pivot_longer_tibble_summarised_ordered$group))))
   }
@@ -93,6 +93,7 @@ pathway_errorbar3<-function (abundance, daa_results_df, Group, ko_to_kegg = FALS
   }
   error_bar_pivot_longer_tibble_summarised_ordered$name <- factor(error_bar_pivot_longer_tibble_summarised_ordered$name, 
                                                                   levels = rev(daa_results_filtered_sub_df$feature))
+  
   bar_errorbar <- ggplot2::ggplot(error_bar_pivot_longer_tibble_summarised_ordered, ggplot2::aes(mean, name, fill = group)) + 
     ggplot2::geom_errorbar(ggplot2::aes(xmax = mean + sd, xmin = 0), position = ggplot2::position_dodge(width = 0.8), width = 0.5, size = 0.5, color = "black") + 
     ggplot2::geom_bar(stat = "identity",  position = ggplot2::position_dodge(width = 0.8), width = 0.8) + 
@@ -209,6 +210,7 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
   plot_result_list <- list()
   # browser()
   switch(ko_to_kegg, `TRUE` = {
+    print("ko_to_kegg is TRUE")
     plot_result_list <- list()
     abundance <- ko2kegg_abundance(file)
     print("ko2kegg_abundance finished!\n")
@@ -264,21 +266,26 @@ ggpicrust3<-function (file, metadata, group, pathway, daa_method = "ALDEx2",
     }
     return(plot_result_list)
   }, `FALSE` = {
-    # browser()
+    print("ko_to_kegg is FALSE")
+    
     plot_result_list <- list()
     abundance <- readr::read_delim(file, delim = "\t", escape_double = FALSE, trim_ws = TRUE)
     abundance <- tibble::column_to_rownames(abundance, var = "NAME")
     daa_results_df <- pathway_daa(abundance = abundance, 
                                   metadata = metadata, group = group, daa_method = daa_method, 
                                   select = select, p.adjust = p.adjust, reference = reference)
+    
+    write.csv(daa_results_df,paste(outname,"_daa_results_df",group,daa_method,".csv",sep = "_"),row.names = FALSE  )
+    
     daa_results_df_count=dplyr::filter(daa_results_df,p_adjust <= 0.05)
     print(paste0("length of daa_results_df(P<=0.05): ",nrow(daa_results_df_count),"\n") )
     
-    daa_results_df2 <- pathway_annotation(pathway = pathway, 
-                                         ko_to_kegg = FALSE, daa_results_df = daa_results_df)
+    # daa_results_df2 <- pathway_annotation(pathway = pathway,  ko_to_kegg = FALSE, daa_results_df = daa_results_df)
+    
     j <- 1
     for (i in unique(daa_results_df$method)) {
       daa_sub_method_results_df <- daa_results_df[daa_results_df[, "method"] == i, ]
+      #browser()
       combination_bar_plot <- pathway_errorbar3(abundance, 
                                                 daa_sub_method_results_df, metadata[, group], 
                                                 p_value_bar = p_value_bar,
